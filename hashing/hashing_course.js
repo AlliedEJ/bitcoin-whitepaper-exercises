@@ -29,7 +29,11 @@ Blockchain.blocks.push({
 
 //// Create Blockchain
 function blockHash(bl) {
-	return crypto.createHash("sha256").update(bl).digest("hex");
+	//var block = JSON.stringify(bl)
+	return crypto.createHash("sha256").update(
+		'${bl.index}; ${bl.prevHash}; ${bl.data}; ${bl.timestamp};'
+		//block
+	).digest("hex");
 }
 
 function createBlock(line){
@@ -40,9 +44,7 @@ function createBlock(line){
 		data: line,
 		timestamp: Date.now(),
 	}
-	var hashInput = newBlock.index + newBlock.prevHash + newBlock.data + newBlock.timeStamp
-	var hashValue = blockHash(hashInput)
-	newBlock.hash = hashValue
+	newBlock.hash = blockHash(newBlock)
 	Blockchain.blocks.push(newBlock)
 
 }
