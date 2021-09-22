@@ -1,0 +1,5 @@
+/transactions/node_modules
+/transactions/keys
+/transactions/keys/pub.pgp.key
+/transactions/keys/priv.pgp.key
+

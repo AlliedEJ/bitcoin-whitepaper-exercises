@@ -2,7 +2,7 @@
 
 var path = require("path");
 var fs = require("fs");
-var openpgp = require("openpgp");
+const openpgp = require("openpgp");
 
 const KEYS_DIR = path.join(__dirname,"keys");
 

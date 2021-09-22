@@ -3,7 +3,7 @@
 var path = require("path");
 var fs = require("fs");
 var crypto = require("crypto");
-var openpgp = require("openpgp");
+const openpgp = require("openpgp");
 
 const KEYS_DIR = path.join(__dirname,"keys");
 const PRIV_KEY_TEXT = fs.readFileSync(path.join(KEYS_DIR,"priv.pgp.key"),"utf8");
@@ -23,7 +23,7 @@ var poem = [
 ];
 
 var Blockchain = {
-	blocks: []
+	blocks: [],
 };
 
 // Genesis block
@@ -41,40 +41,40 @@ addPoem()
 
 // **********************************
 
-async function authorizeTransaction(transObj){
-	transObj.pubKey = PUB_KEY_TEXT;
-	transObj.signature = await createSignature(transObj.data, PRIV_KEY_TEXT);
-
-	return transObj;
-}
-
 function createTransaction(line){
-	var transObj = {
+	var tx = {
 		data: line
 	};
-	transObj.hash = transactionHash(transObj);
+	tx.hash = transactionHash(tx);
 	
-	return transObj;
+	return tx;
+}
+
+// asynchronous function (awaits)
+async function authorizeTransaction(tx){
+	tx.pubKey = PUB_KEY_TEXT;
+	tx.signature = await createSignature(tx.hash, PRIV_KEY_TEXT);
+	
+	return tx;
 }
 
 async function addPoem() {
 	var transactions = [];
 
+	//TODO: add poem lines as authorized transactions
 	for (let line of poem) {
-		var finTrans = createTransaction(line);
-		finTrans = await authorizeTransaction(finTrans);
-		transactions.push(finTrans)
+		let tx = createTransaction(line);
+		tx = await authorizeTransaction(tx);
+		transactions.push(tx)
+		console.log(tx)
 	}
-	
-	var bl = createBlock(transactions);
-	Blockchain.blocks.push(bl);
 
-	console.log(transactions)
+	var bl = createBlock(transactions);
+
+	Blockchain.blocks.push(bl);
 
 	return Blockchain;
 }
-
-// **********************************
 
 async function checkPoem(chain) {
 	console.log(await verifyChain(chain));
@@ -132,22 +132,25 @@ function blockHash(bl) {
 	).digest("hex");
 }
 
-// **********************************
 
-async function verifyTransaction(transObj){
-	if (transObj.hash !== transactionHash(transObj) ||
-		!transObj.pubKey ||
-		typeof transObj.pubKey !== "string" ||
-		!transObj.signature ||
-		typeof transObj.signature !== "string"){
-			return false
-		}
-	return verifySignature(transObj.signature, transObj.pubKey)
+// Addition based on README
+function verifyTransactions(tx){
+	if(tx.hash !== transactionHash(tx) ||
+	  !tx.pubkey ||
+	  typeof tx.pubKey !== "string" ||
+	  !tx.signature ||
+	  typeof tx.signature !== "string"
+	) {
+		return false;
+	} else{
+		return true;
+		console.log("testing")
+	}
+	return verifySignature(tx.signature, tx.pubKey)
 }
 
-// **********************************
 
-//bl represent each block in Blockchain object (*for loop in verifyChain)
+
 async function verifyBlock(bl) {
 	if (bl.data == null) return false;
 	if (bl.index === 0) {
@@ -165,11 +168,7 @@ async function verifyBlock(bl) {
 		if (bl.hash !== blockHash(bl)) return false;
 		if (!Array.isArray(bl.data)) return false;
 
-		for(let i of bl.data){
-			if(!await verifyTransaction(i)){
-				return false
-			}
-		}
+		// TODO: verify transactions in block
 	}
 
 	return true;
